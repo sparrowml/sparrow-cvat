@@ -1,15 +1,10 @@
 """Interact with CVAT API."""
 import os
+import sys
+import traceback
 from typing import Any, Optional
 
 import requests
-
-ERROR_TEMPLATE = """
-Error:
-
-{}
-
-"""
 
 
 def get_host() -> str:
@@ -30,6 +25,7 @@ def post(
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError:
-        print(ERROR_TEMPLATE.format(response.content.decode()))
-        raise
+        traceback.print_exc()
+        print(f"\n{response.content.decode()}\n")
+        sys.exit(1)
     return response.json()
