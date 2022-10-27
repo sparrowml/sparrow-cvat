@@ -1,7 +1,6 @@
 """Interact with CVAT API."""
 import os
-from cgitb import reset
-from typing import Any
+from typing import Any, Optional
 
 import requests
 
@@ -23,9 +22,11 @@ def get_url(route: str) -> str:
     return os.path.join(get_host(), route.removeprefix("/"))
 
 
-def post(route: str, data: dict[str, Any]) -> dict[str, Any]:
+def post(
+    route: str, data: dict[str, Any], headers: Optional[dict[str, str]] = None
+) -> dict[str, Any]:
     """Send a POST request."""
-    response = requests.post(get_url(route), json=data)
+    response = requests.post(get_url(route), json=data, headers=headers)
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError:

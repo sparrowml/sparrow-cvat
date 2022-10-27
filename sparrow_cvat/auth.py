@@ -13,6 +13,11 @@ def get_user() -> str:
     return user
 
 
+def get_org() -> str:
+    """Get the CVAT org."""
+    return os.getenv("CVAT_ORG")
+
+
 def get_password() -> str:
     """Get the CVAT password."""
     password = os.getenv("CVAT_PASSWORD")
@@ -28,3 +33,8 @@ def get_token() -> str:
         data=dict(username=get_user(), password=get_password()),
     )
     return response["key"]
+
+
+def get_auth_headers() -> dict[str, str]:
+    """Get auth headers for a request."""
+    return dict(Authorization=f"Token {get_token()}")
