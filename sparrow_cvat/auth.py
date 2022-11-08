@@ -2,15 +2,20 @@
 import os
 from getpass import getpass
 
-from .api import post
+from cvat_sdk.api_client import ApiClient, Configuration
 
 
-def get_user() -> str:
+def get_host() -> str:
+    """Get the CVAT backend host."""
+    return os.getenv("CVAT_HOST", "https://backend.sparrowml.net")
+
+
+def get_username() -> str:
     """Get the CVAT user."""
-    user = os.getenv("CVAT_USER")
-    if user is None:
-        raise ValueError("Please set the CVAT_USER environment variable.")
-    return user
+    username = os.getenv("CVAT_USERNAME")
+    if username is None:
+        username = input("Username: ")
+    return username
 
 
 def get_org() -> str:
@@ -27,14 +32,18 @@ def get_password() -> str:
 
 
 def get_token() -> str:
-    """Get the auth token for a user."""
-    response = post(
-        "/api/auth/login",
-        data=dict(username=get_user(), password=get_password()),
+    """Get the CVAT auth token."""
+    token = os.getenv("CVAT_TOKEN")
+    if token is not None:
+        return token
+    config = Configuration(get_host())
+    auth, _ = ApiClient(config).auth_api.create_login(
+        {"username": get_username(), "password": get_password()}
     )
-    return response["key"]
+    return auth.key
 
 
-def get_auth_headers() -> dict[str, str]:
-    """Get auth headers for a request."""
-    return dict(Authorization=f"Token {get_token()}")
+def get_api() -> ApiClient:
+    """Get the CVAT API client object."""
+    config = Configuration(get_host(), api_key={"tokenAuth": f"Token {get_token()}"})
+    return ApiClient(config)

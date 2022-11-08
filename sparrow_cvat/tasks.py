@@ -1,18 +1,19 @@
 """Tasks."""
 from typing import Any, Optional
 
-from .api import post
-from .auth import get_auth_headers
+from .auth import get_api
 
 
 def create_task(
     name: str, org: Optional[str] = None, project_id: Optional[int] = None
 ) -> dict[str, Any]:
     """Create a new task (without attached images/videos)."""
-    route = "/api/tasks"
+    client = get_api()
     data = {"name": name}
+    kwargs = {}
     if org is not None:
-        route += f"?org={org}"
+        kwargs["org"] = org
     if project_id is not None:
         data["project_id"] = project_id
-    return post(route, data, headers=get_auth_headers())
+    task, _ = client.tasks_api.create(data, **kwargs)
+    return task.to_dict()
