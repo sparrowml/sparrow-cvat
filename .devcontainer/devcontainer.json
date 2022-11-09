@@ -33,7 +33,8 @@
     },
     "extensions": [
         "ms-python.python",
-        "ms-python.vscode-pylance"
+        "ms-python.vscode-pylance",
+        "GitHub.copilot"
     ],
     "mounts": [
         "source=projectname-bashhistory,target=/commandhistory,type=volume",
@@ -43,6 +44,7 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=/code,type=bind,consistency=cached",
     "runArgs": [
         "--ipc=host",
+        "--env-file=.devcontainer/.env"
     ],
     "postCreateCommand": "pip install -e .[dev]",
 }
