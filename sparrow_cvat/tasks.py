@@ -1,8 +1,9 @@
 """Tasks."""
+import json
 import random
 import time
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from cvat_sdk.api_client import models
 from tqdm import tqdm
@@ -23,6 +24,26 @@ def create_task(
     kwargs = {"org": org}
     task, _ = client.tasks_api.create(data, **kwargs)
     return task.to_dict()
+
+
+def list_tasks(
+    org: str, project_id: int, task_prefix: Optional[str] = None
+) -> list[dict[str, Any]]:
+    """List tasks."""
+    client = get_api()
+    filter_object = {"and": [{"==": [{"var": "project_id"}, project_id]}]}
+    if task_prefix is not None:
+        filter_object["and"].append({"in": [task_prefix, {"var": "name"}]})
+    kwargs = {"org": org, "filter": json.dumps(filter_object)}
+    has_next = True
+    page = 1
+    all_tasks = []
+    while has_next:
+        tasks, _ = client.tasks_api.list(**{**kwargs, "page": page})
+        all_tasks.extend([t.to_dict() for t in tasks["results"]])
+        has_next = tasks["next"] is not None
+        page += 1
+    return all_tasks
 
 
 def upload_images(
@@ -64,6 +85,5 @@ def upload_images(
                 break
             time.sleep(1)
         assert status.state.value == "Finished", status.message
-        task, _ = client.tasks_api.retrieve(task_id)
-        tasks.append(task.to_dict())
+        tasks.append(task["url"])
     return tasks
