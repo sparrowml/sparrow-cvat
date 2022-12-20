@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 from cvat_sdk.core.helpers import TqdmProgressReporter
-from cvat_sdk.core.proxies.tasks import ResourceType
+from cvat_sdk.core.proxies.tasks import ResourceType, Task
 from tqdm import tqdm
 
 from .auth import get_client
@@ -25,6 +25,19 @@ def create_task(
     return task.to_dict()
 
 
+def delete_task(task_id: int) -> None:
+    """Delete a task."""
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        task.remove()
+
+
+def list_tasks(project_id: int) -> list[int]:
+    """List all tasks in a project."""
+    with get_client() as client:
+        return client.projects.retrieve(project_id).tasks
+
+
 def download_annotations(
     task_id: int, output_path: Optional[Union[str, Path]] = None
 ) -> None:
@@ -35,6 +48,16 @@ def download_annotations(
     with get_client() as client:
         task = client.tasks.retrieve(task_id)
         task.export_dataset("CVAT for images 1.1", output_path)
+
+
+def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None:
+    """Upload annotations for a task."""
+    annotations_path = str(annotations_path)
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        task.import_annotations(
+            "CVAT 1.1", annotations_path, pbar=TqdmProgressReporter(tqdm())
+        )
 
 
 def upload_images(task_id: int, image_directory: Union[str, Path]) -> None:
