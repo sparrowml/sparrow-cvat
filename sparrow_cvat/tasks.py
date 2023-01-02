@@ -53,8 +53,10 @@ def download_annotations(
         task = client.tasks.retrieve(task_id)
         task.export_dataset("CVAT for images 1.1", output_zip, include_images=False)
         with zipfile.ZipFile(output_zip, "r") as zip:
-            zip.extract("annotations.xml")
-        os.rename("annotations.xml", output_path)
+            zip.extract("annotations.xml", tmp_dir)
+        xml_path = os.path.join(tmp_dir, "annotations.xml")
+        with open(xml_path, "r") as f1, open(output_path, "w") as f2:
+            f2.write(f1.read())
 
 
 def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None:
