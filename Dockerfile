@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.8
 
 RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" && echo $SNIPPET >> "/root/.bashrc"
 

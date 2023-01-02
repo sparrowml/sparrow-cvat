@@ -21,7 +21,9 @@
             },
         },
         // isort
-        "python.sortImports.path": "/usr/local/bin/isort",
+        "isort.path": [
+            "/usr/local/bin/isort"
+        ],
         // pylint
         "python.linting.pylintEnabled": true,
         "python.linting.pylintPath": "/usr/local/bin/pylint",
