@@ -1,10 +1,9 @@
 """Tasks."""
-
 from pathlib import Path
 from typing import Any, Optional, Union
 
 from cvat_sdk.core.helpers import TqdmProgressReporter
-from cvat_sdk.core.proxies.tasks import ResourceType, Task
+from cvat_sdk.core.proxies.tasks import ResourceType
 from tqdm import tqdm
 
 from .auth import get_client
