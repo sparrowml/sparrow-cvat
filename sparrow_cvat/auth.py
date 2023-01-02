@@ -28,4 +28,8 @@ def get_password() -> str:
 
 def get_client() -> Client:
     """Get the CVAT SDK high-level client object."""
-    return make_client(get_host(), credentials=(get_username(), get_password()))
+    url = get_host().rstrip("/")
+    client = Client(url=url, check_server_version=False)
+    credentials = (get_username(), get_password())
+    client.login(credentials)
+    return client
