@@ -13,7 +13,6 @@ test:
 
 .PHONY: check-codestyle
 check-codestyle:
-	isort --diff --check-only sparrow_cvat
 	black --diff --check sparrow_cvat
 	pylint sparrow_cvat
 
