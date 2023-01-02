@@ -48,7 +48,7 @@ def download_annotations(
     output_path = str(output_path)
     with get_client() as client:
         task = client.tasks.retrieve(task_id)
-        task.export_dataset("CVAT for images 1.1", output_path)
+        task.export_dataset("CVAT for images 1.1", output_path, include_images=False)
 
 
 def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None:
