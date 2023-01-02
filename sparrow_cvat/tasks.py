@@ -1,6 +1,9 @@
 """Tasks."""
 from __future__ import annotations
 
+import os
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -42,13 +45,16 @@ def list_tasks(project_id: int) -> list[int]:
 def download_annotations(
     task_id: int, output_path: Optional[Union[str, Path]] = None
 ) -> None:
-    """Download annotations for a task."""
+    """Download CVAT XML annotations for a task."""
     if output_path is None:
-        output_path = f"{task_id}.zip"
-    output_path = str(output_path)
-    with get_client() as client:
+        output_path = f"{task_id}.xml"
+    with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
+        output_zip = os.path.join(tmp_dir, "download.zip")
         task = client.tasks.retrieve(task_id)
-        task.export_dataset("CVAT for images 1.1", output_path, include_images=False)
+        task.export_dataset("CVAT for images 1.1", output_zip, include_images=False)
+        with zipfile.ZipFile(output_zip, "r") as zip:
+            zip.extract("annotations.xml")
+        os.rename("annotations.xml", output_path)
 
 
 def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None:
