@@ -2,7 +2,7 @@
 import os
 from getpass import getpass
 
-from cvat_sdk import Client, make_client
+from cvat_sdk import Client
 
 
 def get_host() -> str:
