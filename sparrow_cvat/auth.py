@@ -10,6 +10,11 @@ def get_host() -> str:
     return os.getenv("CVAT_HOST", "https://backend.sparrowml.net")
 
 
+def get_ui_host() -> str:
+    """Get the CVAT UI host."""
+    return os.getenv("CVAT_UI_HOST", "https://sparrowml.net")
+
+
 def get_username() -> str:
     """Get the CVAT user."""
     username = os.getenv("CVAT_USERNAME")
