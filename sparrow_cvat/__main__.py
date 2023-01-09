@@ -1,6 +1,7 @@
 """Expose CLI."""
 import fire
 
+from .annotations import boxes_to_cvat
 from .dataset_manifest import create_manifest
 from .jobs import complete_task, download_filename_urls, list_jobs
 from .tasks import (
@@ -18,6 +19,7 @@ def main() -> None:
     """Call CLI commands."""
     fire.Fire(
         {
+            "boxes-to-cvat": boxes_to_cvat,
             "complete-task": complete_task,
             "delete-task": delete_task,
             "download-annotations": download_annotations,
