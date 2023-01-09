@@ -31,10 +31,19 @@ def get_password() -> str:
     return password
 
 
+def get_org() -> str:
+    """Get the CVAT organization name."""
+    org = os.getenv("CVAT_ORG")
+    if org is None:
+        org = input("Organization: ")
+    return org
+
+
 def get_client() -> Client:
     """Get the CVAT SDK high-level client object."""
     url = get_host().rstrip("/")
     client = Client(url=url, check_server_version=False)
     credentials = (get_username(), get_password())
     client.login(credentials)
+    client.api_client.set_default_header("x-organization", get_org())
     return client

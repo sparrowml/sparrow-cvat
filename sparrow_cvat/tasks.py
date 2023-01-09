@@ -15,17 +15,11 @@ from .auth import get_client
 from .utils import VALID_IMAGE_FORMATS
 
 
-def create_task(
-    name: str,
-    org: str,
-    project_id: int,
-    segment_size: int = 25,
-) -> dict[str, Any]:
+def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str, Any]:
     """Create a new task (without attached images/videos)."""
     data = {"name": name, "project_id": project_id, "segment_size": segment_size}
-    kwargs = {"org": org}
     with get_client() as client:
-        task, _ = client.tasks.api.create(data, **kwargs)
+        task, _ = client.tasks.api.create(data)
     return task.to_dict()
 
 
