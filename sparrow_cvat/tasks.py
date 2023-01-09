@@ -1,7 +1,6 @@
 """Tasks API calls."""
 from __future__ import annotations
 
-import os
 import tempfile
 import zipfile
 from pathlib import Path
