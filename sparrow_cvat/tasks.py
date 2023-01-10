@@ -1,7 +1,6 @@
-"""Tasks."""
+"""Tasks API calls."""
 from __future__ import annotations
 
-import os
 import tempfile
 import zipfile
 from pathlib import Path
@@ -15,17 +14,11 @@ from .auth import get_client
 from .utils import VALID_IMAGE_FORMATS
 
 
-def create_task(
-    name: str,
-    org: str,
-    project_id: int,
-    segment_size: int = 25,
-) -> dict[str, Any]:
+def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str, Any]:
     """Create a new task (without attached images/videos)."""
     data = {"name": name, "project_id": project_id, "segment_size": segment_size}
-    kwargs = {"org": org}
     with get_client() as client:
-        task, _ = client.tasks.api.create(data, **kwargs)
+        task, _ = client.tasks.api.create(data)
     return task.to_dict()
 
 
@@ -47,16 +40,41 @@ def download_annotations(
 ) -> None:
     """Download CVAT XML annotations for a task."""
     if output_path is None:
-        output_path = f"{task_id}.xml"
+        output_path = f"annotations_{task_id}.xml"
     with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
-        output_zip = os.path.join(tmp_dir, "download.zip")
+        tmp_dir = Path(tmp_dir)
+        output_zip = tmp_dir / "download.zip"
         task = client.tasks.retrieve(task_id)
         task.export_dataset("CVAT for images 1.1", output_zip, include_images=False)
         with zipfile.ZipFile(output_zip, "r") as zip:
             zip.extract("annotations.xml", tmp_dir)
-        xml_path = os.path.join(tmp_dir, "annotations.xml")
+        xml_path = tmp_dir / "annotations.xml"
         with open(xml_path, "r") as f1, open(output_path, "w") as f2:
             f2.write(f1.read())
+
+
+def download_images(
+    task_id: int, output_directory: Optional[Union[str, Path]] = None
+) -> None:
+    """Download CVAT images for a task."""
+    if output_directory is None:
+        output_directory = Path(f"images_{task_id}")
+    output_directory = Path(output_directory)
+    output_directory.mkdir(exist_ok=True, parents=True)
+    with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_dir = Path(tmp_dir)
+        output_zip = tmp_dir / "download.zip"
+        task = client.tasks.retrieve(task_id)
+        print("Downloading images...")
+        task.export_dataset("CVAT for images 1.1", output_zip, include_images=True)
+        with zipfile.ZipFile(output_zip, "r") as zip:
+            zip.extractall(tmp_dir)
+        print("Moving extracted images...")
+        for image_path in tqdm(list((tmp_dir / "images").glob("*"))):
+            with open(image_path, "rb") as f1, open(
+                output_directory / image_path.name, "wb"
+            ) as f2:
+                f2.write(f1.read())
 
 
 def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None:

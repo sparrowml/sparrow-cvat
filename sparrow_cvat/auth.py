@@ -10,6 +10,11 @@ def get_host() -> str:
     return os.getenv("CVAT_HOST", "https://backend.sparrowml.net")
 
 
+def get_ui_host() -> str:
+    """Get the CVAT UI host."""
+    return os.getenv("CVAT_UI_HOST", "https://sparrowml.net")
+
+
 def get_username() -> str:
     """Get the CVAT user."""
     username = os.getenv("CVAT_USERNAME")
@@ -26,10 +31,19 @@ def get_password() -> str:
     return password
 
 
+def get_org() -> str:
+    """Get the CVAT organization name."""
+    org = os.getenv("CVAT_ORG")
+    if org is None:
+        org = input("Organization: ")
+    return org
+
+
 def get_client() -> Client:
     """Get the CVAT SDK high-level client object."""
     url = get_host().rstrip("/")
     client = Client(url=url, check_server_version=False)
     credentials = (get_username(), get_password())
     client.login(credentials)
+    client.api_client.set_default_header("x-organization", get_org())
     return client
