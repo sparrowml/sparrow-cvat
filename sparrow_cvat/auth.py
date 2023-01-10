@@ -1,6 +1,7 @@
 """Authentication methods."""
 import os
 from getpass import getpass
+from typing import Optional
 
 from cvat_sdk import Client
 
@@ -39,11 +40,21 @@ def get_org() -> str:
     return org
 
 
-def get_client() -> Client:
+def get_client(
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    org: Optional[str] = None,
+) -> Client:
     """Get the CVAT SDK high-level client object."""
+    if username is None:
+        username = get_username()
+    if password is None:
+        password = get_password()
+    if org is None:
+        org = get_org()
     url = get_host().rstrip("/")
     client = Client(url=url, check_server_version=False)
-    credentials = (get_username(), get_password())
+    credentials = (username, password)
     client.login(credentials)
-    client.api_client.set_default_header("x-organization", get_org())
+    client.api_client.set_default_header("x-organization", org)
     return client

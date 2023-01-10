@@ -88,15 +88,20 @@ def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None
 
 
 def upload_images(task_id: int, image_directory: Union[str, Path]) -> None:
-    """Upload images to a task."""
+    """Upload images from a directory to a task."""
     image_directory = Path(image_directory)
     images = []
     for extension in VALID_IMAGE_FORMATS:
         images.extend(image_directory.glob(f"*{extension}"))
+    upload_image_list(task_id, images)
+
+
+def upload_image_list(task_id: int, image_list: list[Union[str, Path]]) -> None:
+    """Upload a list of images to a task."""
     with get_client() as client:
         task = client.tasks.retrieve(task_id)
         task.upload_data(
             ResourceType.LOCAL,
-            [str(i) for i in images],
+            [str(i) for i in image_list],
             pbar=TqdmProgressReporter(tqdm()),
         )
