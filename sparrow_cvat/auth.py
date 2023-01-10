@@ -39,11 +39,15 @@ def get_org() -> str:
     return org
 
 
-def get_client() -> Client:
+def get_client(
+    username: str = get_username(),
+    password: str = get_password(),
+    org: str = get_org(),
+) -> Client:
     """Get the CVAT SDK high-level client object."""
     url = get_host().rstrip("/")
     client = Client(url=url, check_server_version=False)
-    credentials = (get_username(), get_password())
+    credentials = (username, password)
     client.login(credentials)
-    client.api_client.set_default_header("x-organization", get_org())
+    client.api_client.set_default_header("x-organization", org)
     return client
