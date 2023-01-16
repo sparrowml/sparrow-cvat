@@ -30,7 +30,7 @@ def boxes_to_cvat(
             annotations=annotations,
         )
         dataset_items.append(dataset_item)
-    dataset = dm.Dataset.from_iterable(dataset_items, categories=labels)
+    dataset = dm.Dataset.from_iterable(dataset_items, categories=list(labels))
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_dir = Path(tmp_dir)
         dataset.export(tmp_dir, "cvat")
