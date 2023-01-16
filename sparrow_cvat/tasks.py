@@ -14,6 +14,13 @@ from .auth import get_client
 from .utils import VALID_IMAGE_FORMATS
 
 
+def get_frames_info(task_id: int) -> list[dict[str, Any]]:
+    """Get information about all frames in a task."""
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        return task.get_frames_info()
+
+
 def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str, Any]:
     """Create a new task (without attached images/videos)."""
     data = {"name": name, "project_id": project_id, "segment_size": segment_size}
