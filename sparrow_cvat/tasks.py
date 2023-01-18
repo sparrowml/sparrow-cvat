@@ -11,7 +11,7 @@ from cvat_sdk.core.proxies.tasks import ResourceType
 from tqdm import tqdm
 
 from .auth import get_client
-from .utils import VALID_IMAGE_FORMATS
+from .utils import VALID_IMAGE_FORMATS, VALID_VIDEO_FORMATS
 
 
 def get_frames_info(task_id: int) -> list[dict[str, Any]]:
@@ -101,6 +101,17 @@ def upload_images(task_id: int, image_directory: Union[str, Path]) -> None:
     for extension in VALID_IMAGE_FORMATS:
         images.extend(image_directory.glob(f"*{extension}"))
     upload_image_list(task_id, images)
+
+
+def upload_videos(project_id: int, video_directory: Union[str, Path]) -> None:
+    """Upload video from a directory to a set of new tasks (1 per video)."""
+    video_directory = Path(video_directory)
+    videos: list[Path] = []
+    for extension in VALID_VIDEO_FORMATS:
+        videos.extend(video_directory.glob(f"*{extension}"))
+    for video_path in videos:
+        task = create_task(video_path.name, project_id)
+        upload_image_list(task["id"], [video_path])
 
 
 def upload_image_list(task_id: int, image_list: list[Union[str, Path]]) -> None:

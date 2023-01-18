@@ -12,6 +12,7 @@ from .tasks import (
     list_tasks,
     upload_annotations,
     upload_images,
+    upload_videos,
 )
 
 
@@ -31,5 +32,6 @@ def main() -> None:
             "list-tasks": list_tasks,
             "upload-annotations": upload_annotations,
             "upload-images": upload_images,
+            "upload-videos": upload_videos,
         }
     )
