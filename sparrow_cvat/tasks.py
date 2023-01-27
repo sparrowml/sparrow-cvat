@@ -52,7 +52,12 @@ def download_annotations(
         tmp_dir = Path(tmp_dir)
         output_zip = tmp_dir / "download.zip"
         task = client.tasks.retrieve(task_id)
-        task.export_dataset("CVAT for images 1.1", output_zip, include_images=False)
+        task.export_dataset(
+            "CVAT for images 1.1",
+            output_zip,
+            include_images=False,
+            pbar=TqdmProgressReporter(tqdm()),
+        )
         with zipfile.ZipFile(output_zip, "r") as zip:
             zip.extract("annotations.xml", tmp_dir)
         xml_path = tmp_dir / "annotations.xml"
@@ -73,7 +78,12 @@ def download_images(
         output_zip = tmp_dir / "download.zip"
         task = client.tasks.retrieve(task_id)
         print("Downloading images...")
-        task.export_dataset("CVAT for images 1.1", output_zip, include_images=True)
+        task.export_dataset(
+            "CVAT for images 1.1",
+            output_zip,
+            include_images=True,
+            pbar=TqdmProgressReporter(tqdm()),
+        )
         with zipfile.ZipFile(output_zip, "r") as zip:
             zip.extractall(tmp_dir)
         print("Moving extracted images...")
