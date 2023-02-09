@@ -115,6 +115,15 @@ def upload_images(task_id: int, image_directory: Union[str, Path]) -> None:
     upload_image_list(task_id, images)
 
 
+def upload_video(project_id: int, video_path: Union[str, Path]) -> None:
+    """Upload video to a new task."""
+    video_path = Path(video_path)
+    cap = cv2.VideoCapture(str(video_path))
+    n_frames = math.ceil(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    task = create_task(video_path.name, project_id, segment_size=n_frames + 1)
+    upload_image_list(task["id"], [video_path])
+
+
 def upload_videos(project_id: int, video_directory: Union[str, Path]) -> None:
     """Upload video from a directory to a set of new tasks (1 per video)."""
     video_directory = Path(video_directory)
@@ -122,10 +131,7 @@ def upload_videos(project_id: int, video_directory: Union[str, Path]) -> None:
     for extension in VALID_VIDEO_FORMATS:
         videos.extend(video_directory.glob(f"*{extension}"))
     for video_path in videos:
-        cap = cv2.VideoCapture(str(video_path))
-        n_frames = math.ceil(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        task = create_task(video_path.name, project_id, segment_size=n_frames + 1)
-        upload_image_list(task["id"], [video_path])
+        upload_video(project_id, video_path)
 
 
 def upload_image_list(task_id: int, image_list: list[Union[str, Path]]) -> None:
