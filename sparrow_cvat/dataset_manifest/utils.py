@@ -119,6 +119,7 @@ def _detect_related_images_2D(image_paths, root_path):
 #     image.pcd
 #     image.png
 
+
 # Option 2
 # data/
 #    image_1/
