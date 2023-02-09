@@ -124,7 +124,7 @@ def upload_videos(project_id: int, video_directory: Union[str, Path]) -> None:
     for video_path in videos:
         cap = cv2.VideoCapture(str(video_path))
         n_frames = math.ceil(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        task = create_task(video_path.name, project_id, segment_size=n_frames)
+        task = create_task(video_path.name, project_id, segment_size=n_frames + 1)
         upload_image_list(task["id"], [video_path])
 
 
