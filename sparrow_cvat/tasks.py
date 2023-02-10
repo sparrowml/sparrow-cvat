@@ -45,17 +45,20 @@ def list_tasks(project_id: int) -> list[int]:
 
 
 def download_annotations(
-    task_id: int, output_path: Optional[Union[str, Path]] = None
+    task_id: int,
+    output_path: Optional[Union[str, Path]] = None,
+    media_type: str = "images",
 ) -> None:
     """Download CVAT XML annotations for a task."""
     if output_path is None:
         output_path = f"annotations_{task_id}.xml"
+    assert media_type in ("images", "video"), "media_type must be 'images' or 'video'"
     with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
         tmp_dir = Path(tmp_dir)
         output_zip = tmp_dir / "download.zip"
         task = client.tasks.retrieve(task_id)
         task.export_dataset(
-            "CVAT for images 1.1",
+            f"CVAT for {media_type} 1.1",
             output_zip,
             include_images=False,
             pbar=TqdmProgressReporter(tqdm()),
