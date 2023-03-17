@@ -2,17 +2,21 @@
     "name": "sparrow-cvat",
     "build": {
         "dockerfile": "../Dockerfile",
-        "context": ".."
+        "context": "..",
+        "args": {
+            "USER": "${localEnv:USER}"
+        }
     },
+    "containerUser": "1000",
     "settings": {
         "python.pythonPath": "/usr/local/bin/python",
         "python.languageServer": "Pylance",
         "python.linting.enabled": true,
         // pydocstyle
         "python.linting.pydocstyleEnabled": true,
-        "python.linting.pydocstylePath": "/usr/local/bin/pydocstyle",
+        "python.linting.pydocstylePath": "/home/${localEnv:USER}/.local/bin/pydocstyle",
         // black
-        "python.formatting.blackPath": "/usr/local/bin/black",
+        "python.formatting.blackPath": "/home/${localEnv:USER}/.local/bin/black",
         "python.formatting.provider": "black",
         "[python]": {
             "editor.formatOnSave": true,
@@ -21,12 +25,10 @@
             },
         },
         // isort
-        "isort.path": [
-            "/usr/local/bin/isort"
-        ],
+        "python.sortImports.path": "/home/${localEnv:USER}/.local/bin/isort",
         // pylint
         "python.linting.pylintEnabled": true,
-        "python.linting.pylintPath": "/usr/local/bin/pylint",
+        "python.linting.pylintPath": "/home/${localEnv:USER}/.local/bin/pylint",
         // pytest
         "python.testing.pytestArgs": [
             "sparrow_cvat"
@@ -34,19 +36,21 @@
         "python.testing.pytestEnabled": true,
     },
     "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "GitHub.copilot"
-    ],
+		"GitHub.copilot",
+		"ms-python.isort",
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+	],
     "mounts": [
         "source=projectname-bashhistory,target=/commandhistory,type=volume",
-        "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached,readonly",
+        "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached,readonly",
+        "source=${localEnv:HOME}/.gitconfig,target=/home/${localEnv:USER}/.gitconfig,type=bind,consistency=cached,readonly",
     ],
     "workspaceFolder": "/code",
     "workspaceMount": "source=${localWorkspaceFolder},target=/code,type=bind,consistency=cached",
     "runArgs": [
         "--ipc=host",
-        "--env-file=.devcontainer/.env"
+        "--env-file=.devcontainer/.env",        
     ],
     "postCreateCommand": "pip install -e .[dev]",
 }
