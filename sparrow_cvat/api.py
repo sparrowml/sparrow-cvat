@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import time
 from getpass import getpass
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse
@@ -81,6 +82,20 @@ class CVAT:
         if response.status_code == 204:
             return {}
         return response.json()
+
+    @classmethod
+    def download(cls, route: str) -> bytes:
+        """Download a file from the CVAT API."""
+        route = cls._org_specific_route(route)
+        response = requests.get(os.path.join(cls.api_url, route), auth=cls.basic_auth)
+        raise_for_status(response)
+        while len(response.content) == 0:
+            time.sleep(0.25)
+            response = requests.get(
+                os.path.join(cls.api_url, route), auth=cls.basic_auth
+            )
+            raise_for_status(response)
+        return response.content
 
     @classmethod
     def get(cls, route: str) -> dict[str, Any]:

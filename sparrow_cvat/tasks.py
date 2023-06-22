@@ -46,21 +46,20 @@ def download_annotations(
     if output_path is None:
         output_path = f"annotations_{task_id}.xml"
     assert media_type in ("images", "video"), "media_type must be 'images' or 'video'"
-    with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_dir = Path(tmp_dir)
-        output_zip = tmp_dir / "download.zip"
-        task = client.tasks.retrieve(task_id)
-        task.export_dataset(
-            f"CVAT for {media_type} 1.1",
-            output_zip,
-            include_images=False,
-            pbar=TqdmProgressReporter(tqdm()),
-        )
-        with zipfile.ZipFile(output_zip, "r") as zip:
-            zip.extract("annotations.xml", tmp_dir)
-        xml_path = tmp_dir / "annotations.xml"
-        with open(xml_path, "r") as f1, open(output_path, "w") as f2:
-            f2.write(f1.read())
+    data_format = f"CVAT for {media_type} 1.1"
+    data = CVAT.download(
+        f"tasks/{task_id}/annotations?format={data_format}&action=download"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zip_file = f"{tmpdir}/annotations.zip"
+        with open(zip_file, "wb") as f:
+            f.write(data)
+        with zipfile.ZipFile(zip_file, "r") as f:
+            f.extract("annotations.xml", tmpdir)
+        with open(f"{tmpdir}/annotations.xml", "rb") as f:
+            data = f.read()
+    with open(output_path, "wb") as f:
+        f.write(data)
 
 
 def download_images(
