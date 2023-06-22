@@ -33,8 +33,8 @@ def delete_task(task_id: int) -> None:
 
 def list_tasks(project_id: int) -> list[int]:
     """List all tasks in a project."""
-    with get_client() as client:
-        return client.projects.retrieve(project_id).tasks
+    project = CVAT.get(f"projects/{project_id}")
+    return project["tasks"]
 
 
 def download_annotations(
