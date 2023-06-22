@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
-import pandas as pd
+# import pandas as pd
 from tqdm import tqdm
 
 from .auth import get_client, get_ui_host

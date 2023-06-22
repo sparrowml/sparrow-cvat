@@ -7,11 +7,9 @@ import zipfile
 from pathlib import Path
 from typing import Any, Optional, Union
 
-import cv2
-from cvat_sdk.core.helpers import TqdmProgressReporter
-from cvat_sdk.core.proxies.tasks import ResourceType
 from tqdm import tqdm
 
+from .api import CVAT
 from .auth import get_client
 from .utils import VALID_IMAGE_FORMATS, VALID_VIDEO_FORMATS
 
@@ -25,10 +23,8 @@ def get_frames_info(task_id: int) -> list[dict[str, Any]]:
 
 def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str, Any]:
     """Create a new task (without attached images/videos)."""
-    data = {"name": name, "project_id": project_id, "segment_size": segment_size}
-    with get_client() as client:
-        task, _ = client.tasks.api.create(data)
-    return task.to_dict()
+    payload = {"name": name, "project_id": project_id, "segment_size": segment_size}
+    return CVAT.post("tasks", payload)
 
 
 def delete_task(task_id: int) -> None:

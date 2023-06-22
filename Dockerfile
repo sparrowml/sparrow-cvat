@@ -22,7 +22,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y tzdata
 RUN apt install -y \
     build-essential \
     curl \
-    git
+    git \
+    libgl1-mesa-glx
 
 RUN mkdir -p /code
 RUN chown -R ${USER} /code
