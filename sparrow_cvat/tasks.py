@@ -16,9 +16,8 @@ from .utils import VALID_IMAGE_FORMATS, VALID_VIDEO_FORMATS
 
 def get_frames_info(task_id: int) -> list[dict[str, Any]]:
     """Get information about all frames in a task."""
-    with get_client() as client:
-        task = client.tasks.retrieve(task_id)
-        return task.get_frames_info()
+    task_meta = CVAT.get(f"tasks/{task_id}/data/meta")
+    return task_meta["frames"]
 
 
 def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str, Any]:
