@@ -70,24 +70,19 @@ def download_images(
         output_directory = Path(f"images_{task_id}")
     output_directory = Path(output_directory)
     output_directory.mkdir(exist_ok=True, parents=True)
-    with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_dir = Path(tmp_dir)
-        output_zip = tmp_dir / "download.zip"
-        task = client.tasks.retrieve(task_id)
-        print("Downloading images...")
-        task.export_dataset(
-            "CVAT for images 1.1",
-            output_zip,
-            include_images=True,
-            pbar=TqdmProgressReporter(tqdm()),
-        )
-        with zipfile.ZipFile(output_zip, "r") as zip:
-            zip.extractall(tmp_dir)
-        print("Moving extracted images...")
-        for image_path in tqdm(list((tmp_dir / "images").glob("*"))):
-            with open(image_path, "rb") as f1, open(
-                output_directory / image_path.name, "wb"
-            ) as f2:
+    data_format = "CVAT for images 1.1"
+    data = CVAT.download(
+        f"tasks/{task_id}/dataset?format={data_format}&action=download"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zip_file = f"{tmpdir}/annotations.zip"
+        with open(zip_file, "wb") as f:
+            f.write(data)
+        with zipfile.ZipFile(zip_file, "r") as f:
+            f.extractall(tmpdir)
+        for tmp_image_path in tqdm(list((Path(tmpdir) / "images").glob("*"))):
+            new_image_path = output_directory / tmp_image_path.name
+            with open(tmp_image_path, "rb") as f1, open(new_image_path, "wb") as f2:
                 f2.write(f1.read())
 
 

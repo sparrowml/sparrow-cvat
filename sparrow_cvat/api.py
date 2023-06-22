@@ -87,14 +87,17 @@ class CVAT:
     def download(cls, route: str) -> bytes:
         """Download a file from the CVAT API."""
         route = cls._org_specific_route(route)
+        print("Preparing download...", end="", flush=True)
         response = requests.get(os.path.join(cls.api_url, route), auth=cls.basic_auth)
         raise_for_status(response)
         while len(response.content) == 0:
+            print(".", end="", flush=True)
             time.sleep(0.25)
             response = requests.get(
                 os.path.join(cls.api_url, route), auth=cls.basic_auth
             )
             raise_for_status(response)
+        print(flush=True)
         return response.content
 
     @classmethod
