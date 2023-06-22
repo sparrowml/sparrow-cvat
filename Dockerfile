@@ -22,20 +22,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y tzdata
 RUN apt install -y \
     build-essential \
     curl \
-    ffmpeg \
-    git \
-    libgl1-mesa-glx \
-    libsm6 \
-    libxext6
+    git
 
-# Allow root for Jupyter notebooks
-RUN mkdir /root/.jupyter
-RUN echo "c.NotebookApp.allow_root = True" > /root/.jupyter/jupyter_notebook_config.py
+RUN mkdir -p /code
+RUN chown -R ${USER} /code
+WORKDIR /code
 
 USER ${USER}
+ENV PATH "${PATH}:/home/${USER}/.local/bin"
 
-CMD mkdir -p /code
-WORKDIR /code
 RUN mkdir sparrow_cvat && \
   touch sparrow_cvat/__init__.py
 COPY setup.cfg .
