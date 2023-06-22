@@ -71,6 +71,18 @@ class CVAT:
         return f"{url.path}?{query}"
 
     @classmethod
+    def delete(cls, route: str) -> dict[str, Any]:
+        """Make a DELETE request to the CVAT API."""
+        route = cls._org_specific_route(route)
+        response = requests.delete(
+            os.path.join(cls.api_url, route), auth=cls.basic_auth
+        )
+        raise_for_status(response)
+        if response.status_code == 204:
+            return {}
+        return response.json()
+
+    @classmethod
     def get(cls, route: str) -> dict[str, Any]:
         """Make a GET request to the CVAT API."""
         route = cls._org_specific_route(route)

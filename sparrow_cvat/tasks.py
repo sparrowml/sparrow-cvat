@@ -29,9 +29,7 @@ def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str,
 
 def delete_task(task_id: int) -> None:
     """Delete a task."""
-    with get_client() as client:
-        task = client.tasks.retrieve(task_id)
-        task.remove()
+    return CVAT.delete(f"tasks/{task_id}")
 
 
 def list_tasks(project_id: int) -> list[int]:
