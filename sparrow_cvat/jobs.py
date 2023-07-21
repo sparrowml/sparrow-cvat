@@ -8,9 +8,6 @@ from typing import Optional, Union
 # import pandas as pd
 from tqdm import tqdm
 
-from .auth import get_client, get_ui_host
-
-
 def list_jobs(task_id: int) -> list[int]:
     """List all tasks in a project."""
     with get_client() as client:

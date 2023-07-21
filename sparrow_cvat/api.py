@@ -13,12 +13,7 @@ from requests.auth import HTTPBasicAuth
 
 def get_host() -> str:
     """Get the CVAT backend host."""
-    return os.getenv("CVAT_HOST", "https://backend.sparrowml.net")
-
-
-def get_ui_host() -> str:
-    """Get the CVAT UI host."""
-    return os.getenv("CVAT_UI_HOST", "https://sparrowml.net")
+    return os.getenv("CVAT_HOST", "http://52.71.118.246")
 
 
 def get_username() -> str:
@@ -121,3 +116,9 @@ class CVAT:
         if response.status_code == 204:
             return {}
         return response.json()
+
+
+class SparrowML(CVAT):
+    """API class for SparrowML."""
+
+    api_url: str = os.path.join(CVAT.base_url, "sparrowml/api")

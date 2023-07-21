@@ -2,16 +2,13 @@
 import fire
 
 from .jobs import complete_task, download_filename_urls, list_jobs
-from .tasks import (
+from .tasks import (  # upload_annotations,; upload_video,; upload_videos,
     create_task,
     delete_task,
     download_annotations,
     download_images,
     list_tasks,
-    upload_annotations,
     upload_images,
-    upload_video,
-    upload_videos,
 )
 
 
@@ -26,17 +23,9 @@ def main() -> None:
         "create-task": create_task,
         "list-jobs": list_jobs,
         "list-tasks": list_tasks,
-        "upload-annotations": upload_annotations,
+        # "upload-annotations": upload_annotations,
         "upload-images": upload_images,
-        "upload-video": upload_video,
-        "upload-videos": upload_videos,
+        # "upload-video": upload_video,
+        # "upload-videos": upload_videos,
     }
-    try:
-        from .annotations import boxes_to_cvat
-        from .dataset_manifest import create_manifest
-
-        commands["boxes-to-cvat"] = boxes_to_cvat
-        commands["create-manifest"] = create_manifest
-    except ImportError:
-        pass
     fire.Fire(commands)
