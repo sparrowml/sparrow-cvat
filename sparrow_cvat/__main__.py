@@ -2,6 +2,7 @@
 import fire
 
 from .tasks import (
+    complete_task,
     create_task,
     delete_task,
     download_annotations,
@@ -14,10 +15,11 @@ from .tasks import (
 def main() -> None:
     """Call CLI commands."""
     commands = {
+        "complete-task": complete_task,
+        "create-task": create_task,
         "delete-task": delete_task,
         "download-annotations": download_annotations,
         "download-images": download_images,
-        "create-task": create_task,
         "list-tasks": list_tasks,
         "upload-images": upload_images,
     }

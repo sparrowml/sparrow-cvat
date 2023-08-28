@@ -43,6 +43,13 @@ def list_tasks(project_id: int) -> list[int]:
     return tasks
 
 
+def complete_task(task_id: int) -> dict[str, Any]:
+    """Mark a task as complete."""
+    task = CVAT.get(f"tasks/{task_id}")
+    batch_slug = task["name"]
+    return SparrowML.post(f"batches/{batch_slug}/complete")
+
+
 def download_annotations(
     task_id: int,
     output_path: Optional[Union[str, Path]] = None,
