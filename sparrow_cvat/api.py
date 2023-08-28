@@ -55,7 +55,7 @@ def get_client(username: str, password: str, org: str) -> CVAT:
     try:
         CVAT.get("users/self")
     except requests.exceptions.HTTPError:
-        raise MaxRetryError("No internet connection.")
+        raise MaxRetryError("Client Error", get_host())
     return CVAT
 
 
