@@ -3,17 +3,19 @@ from __future__ import annotations
 
 import os
 import time
+import warnings
 from getpass import getpass
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse
 
 import requests
 from requests.auth import HTTPBasicAuth
+from urllib3.exceptions import MaxRetryError
 
 
 def get_host() -> str:
     """Get the CVAT backend host."""
-    return os.getenv("CVAT_HOST", "http://52.71.118.246")
+    return os.getenv("CVAT_HOST", "https://sparrowml.net")
 
 
 def get_username() -> str:
@@ -38,6 +40,23 @@ def get_org() -> str:
     if org is None:
         org = input("Organization: ")
     return org
+
+
+def get_client(username: str, password: str, org: str) -> CVAT:
+    """Get a CVAT client."""
+    warnings.warn(
+        "get_client() is deprecated. Use CVAT class instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    os.environ["CVAT_USERNAME"] = username
+    os.environ["CVAT_PASSWORD"] = password
+    os.environ["CVAT_ORG"] = org
+    try:
+        CVAT.get("users/self")
+    except requests.exceptions.HTTPError:
+        raise MaxRetryError("No internet connection.")
+    return CVAT
 
 
 def raise_for_status(response: requests.Response) -> None:
