@@ -110,7 +110,7 @@ def upload_image_list(
     org = get_org()
     task = CVAT.get(f"tasks/{task_id}")
     batch_slug = task["name"]
-    for image_path in tqdm(map(Path, image_list)):
+    for image_path in tqdm(list(map(Path, image_list))):
         image = Image.open(image_path)
         width, height = image.size
         with open(image_path, "rb") as f:
