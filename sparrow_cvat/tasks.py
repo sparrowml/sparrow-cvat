@@ -41,7 +41,8 @@ def list_tasks(project_id: int) -> list[int]:
     response = CVAT.get(f"tasks?project_id={project_id}")
     tasks = [task["id"] for task in response["results"]]
     while response["next"]:
-        response = CVAT.get(response["next"])
+        _, path = response["next"].split("api/")
+        response = CVAT.get(path)
         tasks.extend([task["id"] for task in response["results"]])
     return tasks
 
