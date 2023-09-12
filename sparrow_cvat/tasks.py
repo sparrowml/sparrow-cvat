@@ -10,7 +10,7 @@ from typing import Any, Optional, Union
 from cvat_sdk.core.helpers import TqdmProgressReporter
 from tqdm import tqdm
 
-from .api import get_client
+from .api import CVAT, get_client
 from .utils import VALID_IMAGE_FORMATS, VALID_VIDEO_FORMATS
 
 
@@ -38,8 +38,12 @@ def delete_task(task_id: int) -> None:
 
 def list_tasks(project_id: int) -> list[int]:
     """List all tasks in a project."""
-    with get_client() as client:
-        return client.projects.retrieve(project_id).tasks
+    response = CVAT.get(f"tasks?project_id={project_id}")
+    tasks = [task["id"] for task in response["results"]]
+    while response["next"]:
+        response = CVAT.get(response["next"])
+        tasks.extend([task["id"] for task in response["results"]])
+    return tasks
 
 
 def download_annotations(
