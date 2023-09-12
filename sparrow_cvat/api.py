@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import time
-import warnings
 from getpass import getpass
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse
@@ -11,7 +10,6 @@ from urllib.parse import parse_qsl, urlencode, urlparse
 import requests
 from cvat_sdk import Client
 from requests.auth import HTTPBasicAuth
-from urllib3.exceptions import MaxRetryError
 
 
 def get_host() -> str:
