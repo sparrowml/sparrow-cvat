@@ -1,36 +1,39 @@
 """Tasks API calls."""
 from __future__ import annotations
 
-import hashlib
+import math
 import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, Optional, Union
 
-import requests
-from PIL import Image
+from cvat_sdk.core.helpers import TqdmProgressReporter
 from tqdm import tqdm
 
-from .api import CVAT, SparrowML, get_org, raise_for_status
-from .utils import VALID_IMAGE_FORMATS
+from .api import CVAT, get_client
+from .utils import VALID_IMAGE_FORMATS, VALID_VIDEO_FORMATS
 
 
 def get_frames_info(task_id: int) -> list[dict[str, Any]]:
     """Get information about all frames in a task."""
-    task_meta = CVAT.get(f"tasks/{task_id}/data/meta")
-    return task_meta["frames"]
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        return task.get_frames_info()
 
 
-def create_task(name: str, project_id: int) -> dict[str, Any]:
+def create_task(name: str, project_id: int, segment_size: int = 25) -> dict[str, Any]:
     """Create a new task (without attached images/videos)."""
-    org = get_org()
-    payload = {"org": org, "project_id": project_id, "slug": name}
-    return SparrowML.post("batches", payload)
+    data = {"name": name, "project_id": project_id, "segment_size": segment_size}
+    with get_client() as client:
+        task, _ = client.tasks.api.create(data)
+    return task.to_dict()
 
 
 def delete_task(task_id: int) -> None:
     """Delete a task."""
-    return CVAT.delete(f"tasks/{task_id}")
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        task.remove()
 
 
 def list_tasks(project_id: int) -> list[int]:
@@ -38,16 +41,10 @@ def list_tasks(project_id: int) -> list[int]:
     response = CVAT.get(f"tasks?project_id={project_id}")
     tasks = [task["id"] for task in response["results"]]
     while response["next"]:
-        response = CVAT.get(response["next"])
+        _, path = response["next"].split("api/")
+        response = CVAT.get(path)
         tasks.extend([task["id"] for task in response["results"]])
     return tasks
-
-
-def complete_task(task_id: int) -> dict[str, Any]:
-    """Mark a task as complete."""
-    task = CVAT.get(f"tasks/{task_id}")
-    batch_slug = task["name"]
-    return SparrowML.post(f"batches/{batch_slug}/complete")
 
 
 def download_annotations(
@@ -59,20 +56,21 @@ def download_annotations(
     if output_path is None:
         output_path = f"annotations_{task_id}.xml"
     assert media_type in ("images", "video"), "media_type must be 'images' or 'video'"
-    data_format = f"CVAT for {media_type} 1.1"
-    data = CVAT.download(
-        f"tasks/{task_id}/annotations?format={data_format}&action=download"
-    )
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zip_file = f"{tmpdir}/annotations.zip"
-        with open(zip_file, "wb") as f:
-            f.write(data)
-        with zipfile.ZipFile(zip_file, "r") as f:
-            f.extract("annotations.xml", tmpdir)
-        with open(f"{tmpdir}/annotations.xml", "rb") as f:
-            data = f.read()
-    with open(output_path, "wb") as f:
-        f.write(data)
+    with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_dir = Path(tmp_dir)
+        output_zip = tmp_dir / "download.zip"
+        task = client.tasks.retrieve(task_id)
+        task.export_dataset(
+            f"CVAT for {media_type} 1.1",
+            output_zip,
+            include_images=False,
+            pbar=TqdmProgressReporter(tqdm()),
+        )
+        with zipfile.ZipFile(output_zip, "r") as zip:
+            zip.extract("annotations.xml", tmp_dir)
+        xml_path = tmp_dir / "annotations.xml"
+        with open(xml_path, "r") as f1, open(output_path, "w") as f2:
+            f2.write(f1.read())
 
 
 def download_images(
@@ -83,61 +81,74 @@ def download_images(
         output_directory = Path(f"images_{task_id}")
     output_directory = Path(output_directory)
     output_directory.mkdir(exist_ok=True, parents=True)
-    data_format = "CVAT for images 1.1"
-    data = CVAT.download(
-        f"tasks/{task_id}/dataset?format={data_format}&action=download"
-    )
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zip_file = f"{tmpdir}/annotations.zip"
-        with open(zip_file, "wb") as f:
-            f.write(data)
-        with zipfile.ZipFile(zip_file, "r") as f:
-            f.extractall(tmpdir)
-        for tmp_image_path in tqdm(list((Path(tmpdir) / "images").glob("*"))):
-            new_image_path = output_directory / tmp_image_path.name
-            with open(tmp_image_path, "rb") as f1, open(new_image_path, "wb") as f2:
+    with get_client() as client, tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_dir = Path(tmp_dir)
+        output_zip = tmp_dir / "download.zip"
+        task = client.tasks.retrieve(task_id)
+        print("Downloading images...")
+        task.export_dataset(
+            "CVAT for images 1.1",
+            output_zip,
+            include_images=True,
+            pbar=TqdmProgressReporter(tqdm()),
+        )
+        with zipfile.ZipFile(output_zip, "r") as zip:
+            zip.extractall(tmp_dir)
+        print("Moving extracted images...")
+        for image_path in tqdm(list((tmp_dir / "images").glob("*"))):
+            with open(image_path, "rb") as f1, open(
+                output_directory / image_path.name, "wb"
+            ) as f2:
                 f2.write(f1.read())
 
 
-def upload_images(
-    task_id: int, image_directory: Union[str, Path], complete_batch: bool = True
-) -> None:
+def upload_annotations(task_id: int, annotations_path: Union[str, Path]) -> None:
+    """Upload annotations for a task."""
+    annotations_path = str(annotations_path)
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        task.import_annotations(
+            "CVAT 1.1", annotations_path, pbar=TqdmProgressReporter(tqdm())
+        )
+
+
+def upload_images(task_id: int, image_directory: Union[str, Path]) -> None:
     """Upload images from a directory to a task."""
     image_directory = Path(image_directory)
     images = []
     for extension in VALID_IMAGE_FORMATS:
         images.extend(image_directory.glob(f"*{extension}"))
-    upload_image_list(task_id, images, complete_batch=complete_batch)
+    upload_image_list(task_id, images)
 
 
-def upload_image_list(
-    task_id: int, image_list: list[Union[str, Path]], complete_batch: bool = True
-) -> None:
+def upload_video(project_id: int, video_path: Union[str, Path]) -> None:
+    """Upload video to a new task."""
+    try:
+        import cv2
+    except ImportError:
+        raise ImportError("Install sparrow-cvat[video] to upload videos.")
+    video_path = Path(video_path)
+    cap = cv2.VideoCapture(str(video_path))
+    n_frames = math.ceil(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    task = create_task(video_path.name, project_id, segment_size=n_frames + 1)
+    upload_image_list(task["id"], [video_path])
+
+
+def upload_videos(project_id: int, video_directory: Union[str, Path]) -> None:
+    """Upload video from a directory to a set of new tasks (1 per video)."""
+    video_directory = Path(video_directory)
+    videos: list[Path] = []
+    for extension in VALID_VIDEO_FORMATS:
+        videos.extend(video_directory.glob(f"*{extension}"))
+    for video_path in videos:
+        upload_video(project_id, video_path)
+
+
+def upload_image_list(task_id: int, image_list: list[Union[str, Path]]) -> None:
     """Upload a list of images to a task."""
-    org = get_org()
-    task = CVAT.get(f"tasks/{task_id}")
-    batch_slug = task["name"]
-    for image_path in tqdm(list(map(Path, image_list))):
-        image = Image.open(image_path)
-        width, height = image.size
-        with open(image_path, "rb") as f:
-            checksum = hashlib.md5(f.read()).hexdigest()
-        payload = dict(
-            org=org,
-            batch=batch_slug,
-            filename=image_path.name,
-            checksum=checksum,
-            width=width,
-            height=height,
+    with get_client() as client:
+        task = client.tasks.retrieve(task_id)
+        task.upload_data(
+            [str(i) for i in image_list],
+            pbar=TqdmProgressReporter(tqdm()),
         )
-        image_response = SparrowML.post("images", payload)
-        image_id = image_response["id"]
-        presigned_post = image_response["presigned_post"]
-        files = {"file": open(image_path, "rb")}
-        resp = requests.post(
-            presigned_post["url"], data=presigned_post["fields"], files=files
-        )
-        raise_for_status(resp)
-        SparrowML.post(f"images/{image_id}/complete")
-    if complete_batch:
-        SparrowML.post(f"batches/{batch_slug}/complete")

@@ -37,7 +37,7 @@ RUN mkdir sparrow_cvat && \
 COPY setup.cfg .
 COPY setup.py .
 RUN pip install -U pip
-RUN pip install -e .
+RUN pip install -e .[video]
 ADD . .
 
 ENTRYPOINT [ "make" ]

@@ -3,14 +3,13 @@ from __future__ import annotations
 
 import os
 import time
-import warnings
 from getpass import getpass
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse
 
 import requests
+from cvat_sdk import Client
 from requests.auth import HTTPBasicAuth
-from urllib3.exceptions import MaxRetryError
 
 
 def get_host() -> str:
@@ -42,21 +41,24 @@ def get_org() -> str:
     return org
 
 
-def get_client(username: str, password: str, org: str) -> CVAT:
-    """Get a CVAT client."""
-    warnings.warn(
-        "get_client() is deprecated. Use CVAT class instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    os.environ["CVAT_USERNAME"] = username
-    os.environ["CVAT_PASSWORD"] = password
-    os.environ["CVAT_ORG"] = org
-    try:
-        CVAT.get("users/self")
-    except requests.exceptions.HTTPError:
-        raise MaxRetryError("Client Error", get_host())
-    return CVAT
+def get_client(
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    org: Optional[str] = None,
+) -> Client:
+    """Get the CVAT SDK high-level client object."""
+    if username is None:
+        username = get_username()
+    if password is None:
+        password = get_password()
+    if org is None:
+        org = get_org()
+    url = get_host().rstrip("/")
+    client = Client(url=url, check_server_version=False)
+    credentials = (username, password)
+    client.login(credentials)
+    client.api_client.set_default_header("x-organization", org)
+    return client
 
 
 def raise_for_status(response: requests.Response) -> None:
