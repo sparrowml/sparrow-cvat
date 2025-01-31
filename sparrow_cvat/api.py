@@ -1,4 +1,5 @@
 """API class for CVAT."""
+
 from __future__ import annotations
 
 import os
@@ -9,7 +10,10 @@ from urllib.parse import parse_qsl, urlencode, urlparse
 
 import requests
 from cvat_sdk import Client
+from dotenv import load_dotenv
 from requests.auth import HTTPBasicAuth
+
+load_dotenv()
 
 
 def get_host() -> str:

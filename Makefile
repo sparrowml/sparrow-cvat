@@ -11,11 +11,6 @@ VERSION := latest
 test:
 	pytest --cov=sparrow_cvat sparrow_cvat/
 
-.PHONY: check-codestyle
-check-codestyle:
-	black --diff --check sparrow_cvat
-	pylint sparrow_cvat
-
 #* Docker
 # Example: make docker-build VERSION=latest
 # Example: make docker-build IMAGE=some_name VERSION=0.1.0
@@ -47,3 +42,10 @@ publish: branchify
 	twine upload dist/* --username $(PYPI_USERNAME) --password $(PYPI_PASSWORD)
 	git checkout -- setup.cfg
 	rm -rf dist
+
+.PHONY: freeze
+freeze:
+	uv pip compile -q -o requirements.txt setup.cfg
+	echo "-e ." >> requirements.txt
+	uv pip compile -q --extra dev -o requirements-dev.txt setup.cfg
+	echo "-e ." >> requirements-dev.txt
